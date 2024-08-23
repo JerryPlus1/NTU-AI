@@ -1,4 +1,149 @@
-<h2>DApp Store Money</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Money DApp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
 
-<input type="number"  id="store_number" placeholder="Enter amount to store">
-<button class="btn" onclick=""
+    <div class="container">
+        <h1>Store Money DApp</h1>
+        <p>Connect to your Ethereum wallet and store or retrieve money.</p>
+        <input type="number" id="moneyInput" placeholder="Enter amount to store">
+        <button onclick="storeMoney()">Store Money</button>
+        <button onclick="retrieveMoney()">Retrieve Money</button>
+        <div id="output"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <script>
+        let web3;
+        let contract;
+        const contractAddress = '0x84E6d7BA7961C5D4c0ff9834f1650522ee56A262';
+        const contractABI = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "num",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "store_m",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "view_m",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    // Request account access if needed
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                    console.log('Contract Address:', contractAddress); // Log the contract address
+                } catch (error) {
+                    console.error("User denied account access or another error occurred:", error);
+                    document.getElementById('output').innerText = `Error: ${error.message}`;
+                }
+            } else {
+                alert('Please install MetaMask!');
+            }
+        });
+
+        async function storeMoney() {
+            const money = document.getElementById('moneyInput').value;
+            if (!money) {
+                document.getElementById('output').innerText = "Please enter an amount to store.";
+                return;
+            }
+
+            console.log('Amount to Store:', money); // Log the input amount
+
+            const accounts = await web3.eth.getAccounts();
+            contract.methods.store_m(money).send({ from: accounts[0] })
+                .on('receipt', function(receipt){
+                    document.getElementById('output').innerText = `Stored ${money} successfully!`;
+                })
+                .on('error', function(error){
+                    if (error.message.includes("User denied transaction signature")) {
+                        document.getElementById('output').innerText = "You denied the transaction. Please try again.";
+                    } else {
+                        document.getElementById('output').innerText = `Error: ${error.message}`;
+                    }
+                });
+        }
+
+        async function retrieveMoney() {
+            try {
+                const money = await contract.methods.view_m().call();
+                document.getElementById('output').innerText = `Stored money: ${money}`;
+            } catch (error) {
+                document.getElementById('output').innerText = `Error: ${error.message}`;
+            }
+        }
+    </script>
+
+</body>
+</html>
