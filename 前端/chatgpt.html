@@ -65,16 +65,45 @@
     <script>
         let web3;
         let contract;
-        const contractAddress = 'YOUR_CONTRACT_ADDRESS';
+        const contractAddress = '0x84E6d7BA7961C5D4c0ff9834f1650522ee56A262';
         const contractABI = [
-            // Your contract's ABI
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "num",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "store_m",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "view_m",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
         ];
 
         window.addEventListener('load', async () => {
             if (window.ethereum) {
                 web3 = new Web3(window.ethereum);
-                await window.ethereum.enable();
-                contract = new web3.eth.Contract(contractABI, contractAddress);
+                try {
+                    await window.ethereum.enable();
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                } catch (error) {
+                    console.error("User denied account access");
+                }
             } else {
                 alert('Please install MetaMask!');
             }
@@ -93,7 +122,7 @@
         }
 
         async function retrieveMoney() {
-            const money = await contract.methods.retrive_m().call();
+            const money = await contract.methods.view_m().call();
             document.getElementById('output').innerText = `Stored money: ${money}`;
         }
     </script>
